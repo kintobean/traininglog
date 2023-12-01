@@ -1,2 +1,1 @@
-"# traininglog" 
-"# traininglog" 
+"# traininglog"
