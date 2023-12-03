@@ -2,15 +2,33 @@
 #'
 #' @param request Internal parameter for `{shiny}`.
 #'     DO NOT REMOVE.
-#' @import shiny
+#' @import golem shiny bs4Dash DT
 #' @noRd
 app_ui <- function(request) {
   tagList(
     # Leave this function for adding external resources
     golem_add_external_resources(),
     # Your application UI logic
-    fluidPage(
-      h1("traininglogapp")
+    dashboardPage(
+      header = dashboardHeader(
+        title = dashboardBrand(
+          title = "Training Log",
+        )
+      ),
+      sidebar = dashboardSidebar(
+        disable = TRUE
+      ),
+      body = dashboardBody(
+        DT::dataTableOutput('workoutTable', width = '85%'),
+        actionButton("addButton", "Add row", icon = icon('plus')),
+        actionButton("dupeButton", "Duplicate selected row(s)", icon = icon('plus')),
+        actionButton("delButton", "Remove selected row(s)", icon = icon('minus')),
+        fileInput("importButton", "Import program")
+      ),
+      controlbar = dashboardControlbar(
+        bookmarkButton()
+      ),
+      title = "Training Log"
     )
   )
 }
@@ -33,7 +51,7 @@ golem_add_external_resources <- function() {
     favicon(),
     bundle_resources(
       path = app_sys("app/www"),
-      app_title = "traininglogapp"
+      app_title = "traininglog"
     )
     # Add here other external resources
     # for example, you can add shinyalert::useShinyalert()
