@@ -19,12 +19,7 @@ read_program <- function(x) {
   df_list <- lapply(seq(1, ncol(df), 8), function(i) df[, i:min(i+7, ncol(df))])
 
   # Bind all data frames together
-  df_combined <- bind_rows(df_list) %>%
-    mutate(
-      `Week 1` = case_when(
-        is.na(`Week 1`) & is.na(`Week 2`) ~ `Week 3`,
-        is.na(`Week 1`) & is.na(`Week 3`) ~ `Week 2`,
-        TRUE ~ `Week 1`))
+  df_combined <- bind_rows(df_list)
 
   df_combined <- df_combined[,1:7]
 
@@ -38,5 +33,4 @@ read_program <- function(x) {
     'Notes')
 
   df_combined
-
 }
