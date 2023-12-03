@@ -2,7 +2,7 @@
 
 export(run_app)
 import(DT)
-import(bs4Dash)
+import(bslib)
 import(dplyr)
 import(golem)
 import(shiny)
