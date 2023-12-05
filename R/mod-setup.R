@@ -4,9 +4,6 @@ modSetupUI <- function(id) {
   tagList(
     div(
       h1("Setup")
-    ),
-    div(
-      fileInput("importButton", "Import program")
     )
   )
 }

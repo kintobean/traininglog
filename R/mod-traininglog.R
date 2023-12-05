@@ -4,7 +4,10 @@ modTrainingLogUI <- function(id) {
   tagList(
     div(
       h1("Training Log")
-    ),
+      ),
+    div(
+      fileInput(ns("importButton"), "Import program")
+      ),
     div(
       DT::dataTableOutput(ns('workoutTable'), width = '85%')
       ),
@@ -20,6 +23,13 @@ modTrainingLogServer <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
+    exerciseList <- c(
+      "Squat",
+      "Bench",
+      "Deadlift",
+      "Overhead Press"
+    )
+
     blankrow <- data.frame(
       Exercise = character(),
       Sets = character(),
@@ -31,6 +41,19 @@ modTrainingLogServer <- function(id) {
     )
 
     rv_table <- reactiveVal(blankrow)
+
+    observeEvent(rv_table(), {
+      t <- rv_table()
+      if (nrow(t) > 0) {
+        for (i in 1:nrow(t)) {
+          t$Exercise[i] <- as.character(selectInput(paste0("sel", i),
+                                                        "",
+                                                        choices = exerciseList,
+                                                        width = "100px"))
+        }
+      }
+      rv_table(t)
+    })
 
     observeEvent(input$workoutTable_cell_edit, {
       rv_table(editData(rv_table(), input$workoutTable_cell_edit, ns('workoutTable'), rownames = FALSE))
@@ -73,49 +96,35 @@ modTrainingLogServer <- function(id) {
 
     observeEvent(input$importButton, {
 
-      t <- rv_table()
-
       rv_table(read_program(input$importButton$datapath))
 
     })
 
     js <- c(
-      "table.on('key', function(e, datatable, key, cell, originalEvent){",
-      "  var targetName = originalEvent.target.localName;",
-      "  if(key == 13 && targetName == 'body'){",
-      "    $(cell.node()).trigger('dblclick.dt');",
-      "  }",
+      "table.rows().every(function(i, tab, row) {",
+      "  var $this = $(this.node());",
+      "  $this.attr('id', this.data()[0]);",
+      "  $this.addClass('shiny-input-container');",
       "});",
-      "table.on('keydown', function(e){",
-      "  if(e.target.localName == 'input' && [9,13,37,38,39,40].indexOf(e.keyCode) > -1){",
-      "    $(e.target).trigger('blur');",
-      "  }",
-      "});",
-      "table.on('key-focus', function(e, datatable, cell, originalEvent){",
-      "  var targetName = originalEvent.target.localName;",
-      "  var type = originalEvent.type;",
-      "  if(type == 'keydown' && targetName == 'input'){",
-      "    if([9,37,38,39,40].indexOf(originalEvent.keyCode) > -1){",
-      "      $(cell.node()).trigger('dblclick.dt');",
-      "    }",
-      "  }",
-      "});"
+      "Shiny.unbindAll(table.table().node());",
+      "Shiny.bindAll(table.table().node());"
     )
 
 
     output$workoutTable <- DT::renderDataTable({
       datatable(
         rv_table(),
+        escape = FALSE,
         editable = TRUE,
         selection = 'multiple',
         rownames = FALSE,
         width = '80%',
         callback = JS(js),
         options = list(
-          keys = TRUE
-        ),
-        extensions = "KeyTable"
+          dom = 't'
+        )
       )
     })
+
   })
 }
