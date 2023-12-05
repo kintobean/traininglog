@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 "# traininglog" 
+=======
+"# traininglog"
+>>>>>>> main
