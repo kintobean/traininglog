@@ -67,6 +67,11 @@ modTrainingLogServer <- function(id) {
       rv_table(editData(rv_table(), input$workoutTable_cell_edit, ns('workoutTable'), rownames = FALSE))
     })
 
+    rvs <- reactiveValues(
+      count = 0,
+      removed = NULL
+      )
+
     observeEvent(input$addButton, {
 
       optionsString <- '<option value="" selected></option>\n'
@@ -76,18 +81,21 @@ modTrainingLogServer <- function(id) {
 
       matching_inputs <- grep("^single_select[0-9]+$", names(input), value = TRUE)
 
-      # Create a list of input values
       input_values_list <- lapply(matching_inputs, function(matching_input) {
         return(input[[matching_input]])
       })
 
-      # browser()
+      if (!is.null(rvs$removed)){
+        input_values_list <- input_values_list[-rvs$removed]
+      }
+
+      print(paste("counter",rvs$count))
 
       t <- rv_table() %>%
         add_row(
           Exercise = '',
           Exercise2 = paste0('<select id="log-single_select',
-                             input$addButton,
+                             rvs$count,
                              '" style="width: 100%;">',
                              optionsString,
                              '</select>'),
@@ -104,6 +112,8 @@ modTrainingLogServer <- function(id) {
         }
       }
 
+      rvs$count <- rvs$count + 1
+
       rv_table(t)
     })
 
@@ -113,6 +123,34 @@ modTrainingLogServer <- function(id) {
       if (!is.null(input$workoutTable_rows_selected)) {
 
         t <- rbind(t, t[as.numeric(input$workoutTable_rows_selected),])
+
+        optionsString <- '<option value="" selected></option>\n'
+        for (exercise in exerciseList) {
+          optionsString <- paste0(optionsString, sprintf('<option value="%s">%s</option>\n', exercise, exercise))
+        }
+
+        matching_inputs <- grep("^single_select[0-9]+$", names(input), value = TRUE)
+
+        input_values_list <- lapply(matching_inputs, function(matching_input) {
+          return(input[[matching_input]])
+        })
+
+        if (!is.null(rvs$removed)){
+          input_values_list <- input_values_list[-rvs$removed]
+        }
+
+        browser()
+        for (i in length(input$workoutTable_rows_selected)){
+          # input_values_list should probably be a global reactive bc duplicating doesnt add to the input list and breaks the below assignment
+          t$Exercise2[nrow(t)-length(input$workoutTable_rows_selected)+i] = input_values_list[[sort(input$workoutTable_rows_selected)[i]]]
+        }
+
+        if (length(input_values_list) > 0) {
+          for (i in length(input_values_list)){
+            t$Exercise2[i] = input_values_list[[i]]
+          }
+        }
+
       }
       rv_table(t)
 
@@ -125,6 +163,9 @@ modTrainingLogServer <- function(id) {
 
         t <- t[-as.numeric(input$workoutTable_rows_selected),]
       }
+
+      rvs$removed <- c(rvs$removed,input$workoutTable_rows_selected)
+
       rv_table(t)
     })
 
