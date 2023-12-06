@@ -24,14 +24,35 @@ modTrainingLogServer <- function(id) {
     ns <- session$ns
 
     exerciseList <- c(
-      "Squat",
-      "Bench",
-      "Deadlift",
-      "Overhead Press"
+      "1-Arm Cable Row",
+      "Bench Press",
+      "Bicep Curls",
+      "Chest Fly",
+      "Conventional Deadlift",
+      "DB Row",
+      "DB SLDL",
+      "Facepulls",
+      "Front Squat",
+      "Hammer Curls",
+      "Highbar Squat",
+      "Incline DB Press",
+      "Lat Pulldown",
+      "Lat Pullover",
+      "Lateral Raises",
+      "Lowbar Squat",
+      "Overhead Press",
+      "Pause Bench",
+      "Pause Squat",
+      "Pullup",
+      "Seated DB Press",
+      "Sumo Deadlift",
+      "TnG Bench",
+      "Tricep Extensions"
     )
 
     blankrow <- data.frame(
       Exercise = character(),
+      Exercise2 = character(),
       Sets = character(),
       Reps = character(),
       Intensity = character(),
@@ -42,33 +63,46 @@ modTrainingLogServer <- function(id) {
 
     rv_table <- reactiveVal(blankrow)
 
-    observeEvent(rv_table(), {
-      t <- rv_table()
-      if (nrow(t) > 0) {
-        for (i in 1:nrow(t)) {
-          t$Exercise[i] <- as.character(selectInput(paste0("sel", i),
-                                                        "",
-                                                        choices = exerciseList,
-                                                        width = "100px"))
-        }
-      }
-      rv_table(t)
-    })
-
     observeEvent(input$workoutTable_cell_edit, {
       rv_table(editData(rv_table(), input$workoutTable_cell_edit, ns('workoutTable'), rownames = FALSE))
     })
 
     observeEvent(input$addButton, {
+
+      optionsString <- '<option value="" selected></option>\n'
+      for (exercise in exerciseList) {
+        optionsString <- paste0(optionsString, sprintf('<option value="%s">%s</option>\n', exercise, exercise))
+      }
+
+      matching_inputs <- grep("^single_select[0-9]+$", names(input), value = TRUE)
+
+      # Create a list of input values
+      input_values_list <- lapply(matching_inputs, function(matching_input) {
+        return(input[[matching_input]])
+      })
+
+      # browser()
+
       t <- rv_table() %>%
         add_row(
           Exercise = '',
+          Exercise2 = paste0('<select id="log-single_select',
+                             input$addButton,
+                             '" style="width: 100%;">',
+                             optionsString,
+                             '</select>'),
           Sets = '',
           Reps = '',
           Intensity = '',
           Load = '',
           RPE = '',
           Notes = '')
+
+      if (length(input_values_list) > 0) {
+        for (i in length(input_values_list)){
+          t$Exercise2[i] = input_values_list[[i]]
+        }
+      }
 
       rv_table(t)
     })
@@ -100,15 +134,15 @@ modTrainingLogServer <- function(id) {
 
     })
 
-    js <- c(
-      "table.rows().every(function(i, tab, row) {",
-      "  var $this = $(this.node());",
-      "  $this.attr('id', this.data()[0]);",
-      "  $this.addClass('shiny-input-container');",
-      "});",
-      "Shiny.unbindAll(table.table().node());",
-      "Shiny.bindAll(table.table().node());"
-    )
+    # js <- c(
+    #   "table.rows().every(function(i, tab, row) {",
+    #   "  var $this = $(this.node());",
+    #   "  $this.attr('id', this.data()[0]);",
+    #   "  $this.addClass('shiny-input-container');",
+    #   "});",
+    #   "Shiny.unbindAll(table.table().node());",
+    #   "Shiny.bindAll(table.table().node());"
+    # )
 
 
     output$workoutTable <- DT::renderDataTable({
@@ -119,9 +153,9 @@ modTrainingLogServer <- function(id) {
         selection = 'multiple',
         rownames = FALSE,
         width = '80%',
-        callback = JS(js),
         options = list(
-          dom = 't'
+          preDrawCallback = JS('function() { Shiny.unbindAll(this.api().table().node()); }'),
+          drawCallback = JS('function() { Shiny.bindAll(this.api().table().node()); } ')
         )
       )
     })
