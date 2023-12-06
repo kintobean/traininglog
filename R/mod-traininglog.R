@@ -42,19 +42,6 @@ modTrainingLogServer <- function(id) {
 
     rv_table <- reactiveVal(blankrow)
 
-    observeEvent(rv_table(), {
-      t <- rv_table()
-      if (nrow(t) > 0) {
-        for (i in 1:nrow(t)) {
-          t$Exercise[i] <- as.character(selectInput(paste0("sel", i),
-                                                        "",
-                                                        choices = exerciseList,
-                                                        width = "100px"))
-        }
-      }
-      rv_table(t)
-    })
-
     observeEvent(input$workoutTable_cell_edit, {
       rv_table(editData(rv_table(), input$workoutTable_cell_edit, ns('workoutTable'), rownames = FALSE))
     })
@@ -100,29 +87,13 @@ modTrainingLogServer <- function(id) {
 
     })
 
-    js <- c(
-      "table.rows().every(function(i, tab, row) {",
-      "  var $this = $(this.node());",
-      "  $this.attr('id', this.data()[0]);",
-      "  $this.addClass('shiny-input-container');",
-      "});",
-      "Shiny.unbindAll(table.table().node());",
-      "Shiny.bindAll(table.table().node());"
-    )
-
-
     output$workoutTable <- DT::renderDataTable({
       datatable(
         rv_table(),
-        escape = FALSE,
         editable = TRUE,
         selection = 'multiple',
         rownames = FALSE,
-        width = '80%',
-        callback = JS(js),
-        options = list(
-          dom = 't'
-        )
+        width = '80%'
       )
     })
 
